@@ -1,5 +1,6 @@
 import axios from "axios";
 import { BASE_URL } from "./apiPaths";
+import { toast } from "react-hot-toast";
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -31,12 +32,35 @@ axiosInstance.interceptors.response.use(
   },
   (error) => {
     if (error.response) {
-      if (error.response.status === 500) {
-        console.error("Server error. Please try again later.");
+      const { status, data } = error.response;
+
+      switch (status) {
+        case 429:
+          toast.error(
+            data.message || "AI quota exceeded. Please try again later.",
+          );
+          break;
+
+        case 503:
+          toast.error(
+            data.message ||
+              "Gemini AI is currently busy. Please try again later.",
+          );
+          break;
+
+        case 500:
+          toast.error(data.message || "Server error. Please try again later.");
+          break;
+
+        default:
+          toast.error(data.message || "Something went wrong.");
       }
     } else if (error.code === "ECONNABORTED") {
-      console.error("Request timeout. Please try again");
+      toast.error("Request timeout. Please try again.");
+    } else {
+      toast.error("Network error. Please check your internet connection.");
     }
+
     return Promise.reject(error);
   },
 );

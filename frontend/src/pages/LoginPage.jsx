@@ -36,7 +36,7 @@ const LoginPage = () => {
 
       login(profileResponse.data, token);
       toast.success("Login Successful!");
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.log("FULL ERROR:", error);
       console.log("RESPONSE:", error.response);

@@ -15,19 +15,26 @@ async function generateWithRetry(prompt, retries = 3) {
       console.log("Gemini Success");
 
       return response;
-    } catch (err) {
-      console.log("Gemini Error:", err.status, err.message);
+    } catch (error) {
+      console.error("Gemini Error:", error);
 
-      if (err.status === 503 && i < retries - 1) {
-        const delay = Math.pow(2, i) * 2000;
+      // Don't retry if quota is exceeded
+      if (error.status === 429) {
+        throw error;
+      }
+
+      // Retry only for temporary server errors
+      if (error.status === 503 && i < retries - 1) {
+        const delay = (i + 1) * 2000;
 
         console.log(`Waiting ${delay / 1000} seconds...`);
 
         await new Promise((resolve) => setTimeout(resolve, delay));
+
         continue;
       }
 
-      throw err;
+      throw error;
     }
   }
 }
@@ -100,9 +107,22 @@ const generateOutline = async (req, res) => {
     }
   } catch (error) {
     console.error("Error generating outline:", error);
-    res
-      .status(500)
-      .json({ message: "Server error during AI outline generation" });
+
+    if (error.status === 429) {
+      return res.status(429).json({
+        message: "AI quota exceeded. Please try again later.",
+      });
+    }
+
+    if (error.status === 503) {
+      return res.status(503).json({
+        message: "Gemini AI is currently busy. Please try again later.",
+      });
+    }
+
+    return res.status(500).json({
+      message: "Server error during AI outline generation",
+    });
   }
 };
 
@@ -153,8 +173,11 @@ const generateChapterContent = async (req, res) => {
     console.log("========== GEMINI ERROR ==========");
     console.dir(error, { depth: null });
 
-    /*console.log("Message:", error.message);
-    console.log("Stack:", error.stack);*/
+    if (error.status === 429) {
+      return res.status(429).json({
+        message: "AI quota exceeded. Please try again later.",
+      });
+    }
 
     if (error.status === 503) {
       return res.status(503).json({
@@ -163,9 +186,8 @@ const generateChapterContent = async (req, res) => {
       });
     }
 
-    res.status(500).json({
-      message: error.message,
-      details: error,
+    return res.status(500).json({
+      message: "Internal Server Error",
     });
   }
 };

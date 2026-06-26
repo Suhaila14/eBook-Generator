@@ -42,7 +42,7 @@ function SignupPage() {
 
       login(profileResponse.data, token);
       toast.success("Account created successfully!");
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Signup failed. Please try again",
@@ -76,7 +76,7 @@ function SignupPage() {
               icon={User}
               value={formData.name}
               onChange={handleChange}
-              reqired
+              required
             />
             <InputField
               label="Email"
@@ -86,7 +86,7 @@ function SignupPage() {
               icon={Mail}
               value={formData.email}
               onChange={handleChange}
-              reqired
+              required
             />
             <InputField
               label="Password"
@@ -96,7 +96,7 @@ function SignupPage() {
               icon={Lock}
               value={formData.password}
               onChange={handleChange}
-              reqired
+              required
             />
             <Button
               type="submit"
